@@ -17,7 +17,7 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: password
-      MONGO_INITDB_DATABASE: Operation_Black_Ledger_mongodb
+      MONGO_INITDB_DATABASE: ''
 
     volumes:
       - mongo_data:/data/db
@@ -74,17 +74,32 @@ services:
       dockerfile: Dockerfile
 
     environment:
-      KAFKA_TOPIC: ''
+      KAFKA_URI: 'kafka:9092'
+      KAFKA_TOPIC: 'pizza-orders'
+      REDIS_HOST: 'redis'
+      REDIS_PORT: '6441'
+      MONGODB_COLLECTION: ''
+      MONGODB_DATABASE: ''
+      MONGO_URI: 'mongodb://root:password@mongodb:27017/?authSource=admin'
+
     ports:
       - '8080:8080'
 
 
   worker_kitchen:
-    ...
+#    consumer_config = {
+#    "bootstrap.servers": "kafka:9092",
+#    "group.id": "order-tracker",
+#    "auto.offset.reset": "earliest"
+#}
 
 
   worker_text:
-    ...
+#  consumer_config = {
+#  "bootstrap.servers": "kafka:9092",
+#  "group.id": "order-tracker",
+#  "auto.offset.reset": "earliest"
+#}
 
 
 volumes:

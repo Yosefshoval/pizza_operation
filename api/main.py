@@ -1,20 +1,35 @@
 from fastapi import FastAPI, UploadFile
 from pydantic import ValidationError
 from schema import OrderRequest
+from mongo_connection import DBConnection
+from kafka_producer import publish_message
+from redis_producer import *
 import json
 
 
+
+mongo_client = DBConnection()
 app = FastAPI()
 
 @app.post('/upload_file')
 def post_orders(file: UploadFile):
-    orders = json.load(file)
+    orders = json.load(file.file)
     for order in orders:
         try:
             OrderRequest(**order)
+            print(order)
         except ValidationError as err:
             print(err)
             continue
+        # 1: save in mongodb
+        mongo_client.save_order(order)
+        # 2: publish to kafka
+        publish_message(order)
+        # 3: cacheing in redis
+        cache_order(order)
+    return {
+        'message' : 'Your orders saved in MongoDB, pushed to Kafka for further treatment.'}
+
 
 
 
