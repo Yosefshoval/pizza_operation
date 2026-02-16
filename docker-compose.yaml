@@ -78,6 +78,7 @@ services:
       KAFKA_TOPIC: 'pizza-orders'
       REDIS_HOST: 'redis'
       REDIS_PORT: '6441'
+      REDIS_QUEUE_NAME: ''
       MONGODB_COLLECTION: ''
       MONGODB_DATABASE: ''
       MONGO_URI: 'mongodb://root:password@mongodb:27017/?authSource=admin'

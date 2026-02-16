@@ -25,7 +25,6 @@ def post_orders(file: UploadFile):
             # 2: publish to kafka
             publish_message(order)
 
-
             # 3: cacheing in redis
             cache_order(order)
 
