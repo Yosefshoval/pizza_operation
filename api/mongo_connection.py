@@ -17,7 +17,9 @@ class DBConnection:
         return collection
 
     def save_order(self, order: dict):
-        pass
+        cnx = self.get_collection()
+        result = cnx.insert_one(order)
+        return result.inserted_id
 
     def get_order_by_id(self, order_id: str):
         pass
