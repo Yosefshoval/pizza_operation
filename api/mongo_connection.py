@@ -3,7 +3,7 @@ from os import getenv
 
 MONGODB_COLLECTION = getenv('MONGODB_COLLECTION')
 MONGODB_DATABASE = getenv('MONGODB_DATABASE')
-MONGO_URI = getenv('MONGO_URI')
+MONGO_URI = getenv('MONGO_URI', 'mongodb://root:password@localhost:27017/?authSource=admin')
 
 
 class DBConnection:
@@ -21,5 +21,9 @@ class DBConnection:
         result = cnx.insert_one(order)
         return result.inserted_id
 
+
     def get_order_by_id(self, order_id: str):
-        pass
+        cnx = self.get_collection()
+        result =  cnx.find({'order_id' : order_id})
+        print(result)
+        return result

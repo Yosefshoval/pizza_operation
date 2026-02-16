@@ -1,3 +1,4 @@
+import json
 from os import getenv
 from redis import Redis
 
@@ -10,17 +11,14 @@ r = Redis(host=REDIS_HOST, port=REDIS_PORT, db=0)
 
 def cache_order(order: dict):
     key = f"order:{order['order_id']}"
+    serialized_order = json.dumps(order)
 
-    r.hset(key, mapping=order)
-    r.lpush(
-        REDIS_QUEUE_NAME,
-        json.dumps({
-            "order_id": order["order_id"],
-            'sender': 'producer1',
-            'pushed_at': datetime.now().isoformat()
-        })
+    r.set(
+        name=key,
+        value=serialized_order
     )
 
-def get_order(order_id: str):
-    pass
 
+def get_order(order_id: str):
+    order = r.get(f'order:{order_id}')
+    return order

@@ -42,9 +42,12 @@ def post_orders(file: UploadFile):
 
 
 @app.get('/order/{order_id}')
-def get_order(order_id: str):
+def retrieve_order(order_id: str):
     try:
+        # try to retrieve the order from redis chach
         order = get_order(order_id=order_id)
+
+        # if order is not exist in redis - retrieve it from mongodb
         if order is None:
             order = mongo_client.get_order_by_id(order_id)
         return order
