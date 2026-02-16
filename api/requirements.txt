@@ -1,0 +1,7 @@
+uvicorn
+fastapi
+pydantic
+confluent-kafka
+redis
+pymongo
+python-multipart

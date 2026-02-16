@@ -1,8 +1,9 @@
 from pymongo import MongoClient
 from os import getenv
+from bson import ObjectId
 
-MONGODB_COLLECTION = getenv('MONGODB_COLLECTION')
-MONGODB_DATABASE = getenv('MONGODB_DATABASE')
+MONGODB_COLLECTION = getenv('MONGODB_COLLECTION', 'pizza_orders')
+MONGODB_DATABASE = getenv('MONGODB_DATABASE', 'pizza_orders')
 MONGO_URI = getenv('MONGO_URI', 'mongodb://root:password@localhost:27017/?authSource=admin')
 
 
@@ -24,6 +25,5 @@ class DBConnection:
 
     def get_order_by_id(self, order_id: str):
         cnx = self.get_collection()
-        result =  cnx.find({'order_id' : order_id})
-        print(result)
+        result = cnx.find({'_id' : ObjectId(order_id)})
         return result

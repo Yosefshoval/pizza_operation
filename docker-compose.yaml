@@ -1,9 +1,9 @@
 version: '3.8'
 
 services:
-  MongoDB:
+  mongodb:
     image: docker.io/library/mongo:7.0
-    container_name: Operation_Black_Ledger_mongo
+    container_name: pizza_orders_mongo
     restart: always
     ports:
       - '27017:27017'
@@ -29,6 +29,13 @@ services:
     ports:
       - "9092:9092"
 
+    healthcheck:
+      test: [ "CMD-SHELL", "nc -z localhost 9092 || exit 1" ]
+      interval: 5s
+      timeout: 15s
+      retries: 10
+      start_period: 20s
+
     environment:
       KAFKA_KRAFT_MODE: 'true'
 
@@ -40,7 +47,7 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
 
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
 
       KAFKA_LOG_DIRS: /var/lib/kafka/data
@@ -49,11 +56,23 @@ services:
       - kafka_kraft:/var/lib/kafka/data
 
 
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: kafka-ui
+    ports:
+      - "8080:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+
+
   redis:
     image: redis:latest
     container_name: redis_orders
     ports:
       - '6441:6379'
+#    healthcheck:
+#      test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
 
     volumes:
       - redis_data:/data
@@ -78,16 +97,20 @@ services:
       KAFKA_TOPIC: 'pizza-orders'
       REDIS_HOST: 'redis'
       REDIS_PORT: '6441'
-      REDIS_QUEUE_NAME: ''
-      MONGODB_COLLECTION: ''
-      MONGODB_DATABASE: ''
+      MONGODB_COLLECTION: 'pizza_orders'
+      MONGODB_DATABASE: 'pizza_orders'
       MONGO_URI: 'mongodb://root:password@mongodb:27017/?authSource=admin'
 
     ports:
-      - '8080:8080'
+      - '8001:8001'
+
+    depends_on:
+      - kafka
+      - redis
+      - mongodb
 
 
-  worker_kitchen:
+#  worker_kitchen:
 #    consumer_config = {
 #    "bootstrap.servers": "kafka:9092",
 #    "group.id": "order-tracker",
@@ -95,7 +118,7 @@ services:
 #}
 
 
-  worker_text:
+#  worker_text:
 #  consumer_config = {
 #  "bootstrap.servers": "kafka:9092",
 #  "group.id": "order-tracker",
