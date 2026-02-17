@@ -19,6 +19,9 @@ class DBConnection:
 
     def save_order(self, order: dict):
         cnx = self.get_collection()
+        if cnx.find({"order_id" : order.get('order_id')}).to_list():
+            print('order already exist in MongoDB')
+            return None
         result = cnx.insert_one(order)
         return result.inserted_id
 

@@ -10,6 +10,6 @@ consumer_config = {
     "group.id": KAFKA_TOPIC,
     "auto.offset.reset": "earliest"
 }
-
+print(consumer_config)
 consumer = Consumer(consumer_config)
 

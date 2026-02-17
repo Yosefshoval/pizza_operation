@@ -10,7 +10,7 @@ import time
 
 KAFKA_TOPIC = getenv('KAFKA_TOPIC', 'pizza-orders')
 KAFKA_GROUP_ID = getenv('KAFKA_GROUP_ID', 'text-team')
-KAFKA_URI = getenv('KAFKA_URI', 'localhost:29092')
+KAFKA_URI = getenv('KAFKA_URI', 'localhost:9092')
 
 REDIS_HOST = getenv('REDIS_HOST', 'localhost')
 REDIS_PORT = getenv('REDIS_PORT', '6441')
@@ -33,7 +33,7 @@ consumer_config = {
 try:
     consumer = Consumer(consumer_config)
     consumer.subscribe([KAFKA_TOPIC])
-    print(consumer.list_topics(timeout=5.0))
+    print(consumer.list_topics(topic=KAFKA_TOPIC, timeout=1.0))
 except Exception as e:
     print(e)
 
@@ -66,22 +66,29 @@ def kafka_listener():
     while True:
         try:
             order = consumer.poll(1.0)
-            consumer.consumer_group_metadata()
             print(f'consumer.poll(1.0): {order}')
+
             if order is None:
                 continue
             if order.error():
                 print(f'Error: {order.error()}.')
+                continue
+
             order_value = json.loads(order.value().decode('utf-8'))
             print(f'order received: {order_value}')
+
+            if "_id" not in order:
+                continue
+
             time.sleep(15)
             mongo_updated = update_status(order_value["_id"])
             print(f'mongo_updated: {mongo_updated}')
+
             deleted_from_redis = delete_from_redis(order_value["_id"])
             print(f'deleted_from_redis: {deleted_from_redis}')
 
-        except Exception as e:
-            print(e)
+        except Exception as err:
+            print(err)
             continue
 
 

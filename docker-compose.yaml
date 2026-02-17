@@ -30,12 +30,7 @@ services:
 #      - "9092:9092"
 #      - "29092:29092"
 #
-#    healthcheck:
-#      test: [ "CMD-SHELL", "nc -z localhost 9092 || exit 1" ]
-#      interval: 5s
-#      timeout: 15s
-#      retries: 10
-#      start_period: 20s
+
 #
 #    environment:
 #      KAFKA_KRAFT_MODE: 'true'
@@ -49,8 +44,6 @@ services:
 #      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT,CONTROLLER:PLAINTEXT
 #      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_HOST://0.0.0.0:29092,CONTROLLER://0.0.0.0:9093
 #      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
-##      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
-##      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
 #      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
 #
 #      KAFKA_LOG_DIRS: /var/lib/kafka/data
@@ -64,6 +57,12 @@ services:
       ports:
         - "9092:9092"
         - "29092:29092"
+      healthcheck:
+        test: [ "CMD-SHELL", "nc -z localhost 9092 || exit 1" ]
+        interval: 5s
+        timeout: 15s
+        retries: 10
+        start_period: 20s
       environment:
         KAFKA_NODE_ID: 1
         KAFKA_PROCESS_ROLES: broker,controller
@@ -71,15 +70,15 @@ services:
         KAFKA_KRAFT_MODE: 'true'
         CLUSTER_ID: '1L6g7nGhU-eAKfL--X25wo'
 
-        KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT,CONTROLLER:PLAINTEXT
-
-        KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_HOST://0.0.0.0:29092,CONTROLLER://0.0.0.0:9093
-
-        KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+        KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,CONTROLLER://0.0.0.0:9093,PLAINTEXT_HOST://0.0.0.0:9092
+        KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://kafka:9092
+        KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+        KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
 
         KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
         KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
         KAFKA_LOG_DIRS: /var/lib/kafka/data
+
       volumes:
         - kafka_kraft:/var/lib/kafka/data
 
@@ -100,8 +99,8 @@ services:
     container_name: redis_orders
     ports:
       - '6441:6379'
-#    healthcheck:
-#      test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
+    healthcheck:
+      test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
 
     volumes:
       - redis_data:/data
@@ -134,9 +133,12 @@ services:
       - '8001:8001'
 
     depends_on:
-      - kafka
-      - redis
-      - mongodb
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
 
 
   worker_kitchen:
@@ -157,10 +159,12 @@ services:
       MONGO_URI: 'mongodb://root:password@mongodb:27017/?authSource=admin'
 
     depends_on:
-      - kafka
-      - redis
-      - mongodb
-
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
 
   worker_text:
     build:
@@ -176,9 +180,10 @@ services:
       MONGO_URI: 'mongodb://root:password@mongodb:27017/?authSource=admin'
 
     depends_on:
-      - kafka
-      - mongodb
-
+      kafka:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
 
 volumes:
   kafka_kraft:
