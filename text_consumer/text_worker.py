@@ -21,7 +21,6 @@ consumer = Consumer(consumer_config)
 mongodb_client = MongoClient(MONGO_URI)
 
 allergies = ["gluten ","peanut ","allergy"]
-'allergies_flaged'
 
 def get_collection():
     db = mongodb_client[MONGODB_DATABASE]
@@ -36,7 +35,7 @@ def remove_punctuation_translate(input_string: str):
 
 def text_analysis(order_instructions: str):
     for word in allergies:
-        if word in order_instructions:
+        if word in order_instructions.lower():
             cleaned_text = remove_punctuation_translate(order_instructions)
             upper_instructions = cleaned_text.upper()
             return upper_instructions
@@ -62,6 +61,7 @@ def worker_listener():
     while True:
         try:
             order = consumer.poll(1.0)
+            print(f'order: {order}')
             if order is None:
                 continue
             if order.error():
