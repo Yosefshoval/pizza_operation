@@ -110,20 +110,41 @@ services:
       - mongodb
 
 
-#  worker_kitchen:
-#    consumer_config = {
-#    "bootstrap.servers": "kafka:9092",
-#    "group.id": "order-tracker",
-#    "auto.offset.reset": "earliest"
-#}
+  worker_kitchen:
+    build:
+      context: kitchen_consumer
+      dockerfile: Dockerfile
+
+    environment:
+      KAFKA_TOPIC: 'text-team'
+      KAFKA_URI: "kafka:9092"
+      REDIS_HOST: 'redis'
+      REDIS_PORT: '6441'
+      MONGODB_COLLECTION: 'pizza_orders'
+      MONGODB_DATABASE: 'pizza_orders'
+      MONGO_URI: 'mongodb://root:password@mongodb:27017/?authSource=admin'
+
+    depends_on:
+      - kafka
+      - redis
+      - mongodb
 
 
-#  worker_text:
-#  consumer_config = {
-#  "bootstrap.servers": "kafka:9092",
-#  "group.id": "order-tracker",
-#  "auto.offset.reset": "earliest"
-#}
+  worker_text:
+    build:
+      context: text_consumer
+      dockerfile: Dockerfile
+
+    environment:
+      KAFKA_TOPIC: 'kitchen-team'
+      KAFKA_URI: "kafka:9092"
+      MONGODB_COLLECTION: 'pizza_orders'
+      MONGODB_DATABASE: 'pizza_orders'
+      MONGO_URI: 'mongodb://root:password@mongodb:27017/?authSource=admin'
+
+    depends_on:
+      - kafka
+      - mongodb
 
 
 volumes:

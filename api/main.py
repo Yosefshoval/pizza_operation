@@ -54,8 +54,8 @@ def retrieve_order(order_id: str):
             order = order.to_list()
             print(order)
             cache_order(order[0], 60)
-            return order[0]
-        return json.loads(order)
+            return {'source':'from mongodb', 'order': order[0]}
+        return {'source':'from redis', 'order': json.loads(order)}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
