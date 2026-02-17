@@ -41,6 +41,7 @@ def post_orders(file: UploadFile):
             print(f'order {inserted_id} inserted to mongodb')
 
             # 2: publish to kafka
+            print('before pushing: ', order)
             publish_message(order)
             print(f'order {order["order_id"]} pushed to kafka')
 

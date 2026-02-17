@@ -43,35 +43,49 @@ def text_analysis(order_instructions: str):
     return False
 
 
-def update_order_mongo(order):
-    pass
+def update_order_mongo(order: dict):
+    cnx = get_collection()
+    set_statement = {'allergies_flaged' : order['allergies_flaged']}
+    if order.get('protocol_cleaned'):
+        set_statement['protocol_cleaned'] = order['protocol_cleaned']
 
+    result = cnx.update_one(
+        {'order_id' : order['order_id']},
+        {'$set' : {set_statement}}
+            )
+    effect = f'matched: {result.matched_count}. modified: {result.modified_count}'
+    print(effect)
+    return effect
 
 
 def worker_listener():
     while True:
-        order = consumer.poll(1.0)
-        if order is None:
+        try:
+            order = consumer.poll(1.0)
+            if order is None:
+                continue
+            if order.error():
+                print(f'Error: {order.error()}')
+                continue
+
+            order_value = json.loads(order.value().decode('utf-8'))
+            print(f'order received: {order_value}')
+
+            if "_id" not in order:
+                continue
+
+            analysis = text_analysis(order_value['special_instructions'])
+            print('analysis: ', analysis)
+            if analysis:
+                order_value['allergies_flaged'] = True
+                order_value['protocol_cleaned'] = analysis
+            else:
+                order_value['allergies_flaged'] = False
+            update_order_mongo(order_value)
+
+        except Exception as e:
+            print(e)
             continue
-        if order.error():
-            print(f'Error: {order.error()}')
-            continue
-
-        order_value = json.loads(order.value().decode('utf-8'))
-        print(f'order received: {order_value}')
-
-        if "_id" not in order:
-            continue
-
-        analysis = text_analysis(order_value['special_instructions'])
-        print('analysis: ', analysis)
-        if analysis:
-            order_value['allergies_flaged'] = True
-            order_value['protocol_cleaned'] = analysis
-        else:
-            order_value['allergies_flaged'] = False
-        update_order_mongo(order_value)
-
 
 worker_listener()
 
