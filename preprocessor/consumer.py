@@ -4,7 +4,7 @@ from producer import flush_message
 
 
 KAFKA_TOPIC = getenv('KAFKA_TOPIC', 'pizza-orders')
-KAFKA_GROUP_ID = getenv('KAFKA_GROUP_ID', 'text-team')
+KAFKA_GROUP_ID = getenv('KAFKA_GROUP_ID', 'prep-team')
 KAFKA_URI = getenv('KAFKA_URI', 'localhost:9092')
 
 consumer_config = {

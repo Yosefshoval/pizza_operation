@@ -148,6 +148,7 @@ services:
       NEW_TOPIC: 'cleaned-instructions'
       KAFKA_URI: 'kafka:9092'
       KAFKA_TOPIC: 'pizza-orders'
+      KAFKA_GROUP_ID: 'prep-team'
 
     depends_on:
       kafka:
