@@ -1,12 +1,18 @@
-from confluent_kafka import Consumer
+from confluent_kafka import Consumer, KafkaException
 import json
-from producer import flush_message
+from producer import *
 from os import getenv
+import logging
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
+
+logger.info('hello from preprocessor consumer')
 
 
-KAFKA_TOPIC = getenv('KAFKA_TOPIC', 'pizza-orders')
-KAFKA_GROUP_ID = getenv('KAFKA_GROUP_ID', 'prep-team')
 KAFKA_URI = getenv('KAFKA_URI', 'localhost:9092')
+KAFKA_GROUP_ID = getenv('KAFKA_GROUP_ID', 'prep-team')
+KAFKA_TOPIC = getenv('KAFKA_TOPIC', 'pizza-orders')
 
 consumer_config = {
     "bootstrap.servers": KAFKA_URI,
@@ -14,8 +20,11 @@ consumer_config = {
     "auto.offset.reset": "earliest"
 }
 
+logger.info('consumer created')
 consumer = Consumer(consumer_config)
 consumer.subscribe([KAFKA_TOPIC])
+logger.info(f'consumer has been subscribed to topic {KAFKA_TOPIC}')
+
 
 prep_path = './pizza_prep.json'
 
@@ -48,16 +57,16 @@ def search_prep(pizza_type: str):
 
 
 def listener():
+    logger.info('loop starting: ')
     while True:
         try:
             order = consumer.poll(1.0)
-
             if order is None:
                 continue
-
-
+            logger.info(f'order {order} received')
             if order.error():
-                continue
+                logger.error(order.error().str())
+                raise order.error()
 
             order_value = json.loads(order.value().decode('utf-8'))
 
@@ -66,6 +75,7 @@ def listener():
             message = {"_id" : order_value["_id"], "pizza_type": order_value["pizza_type"]}
             if analysis:
                 message['protocol_cleaned'] = analysis
+            logger.info(f'message: {message}')
 
             pizza_prep = search_prep(order_value['pizza_type'])
             if not pizza_prep:
@@ -76,8 +86,10 @@ def listener():
             flush_message(message)
 
         except Exception as e:
-            print(f'Error: {e}')
+            logger.error(e)
             continue
 
-
-listener()
+topics = consumer.list_topics(timeout=5.0)
+if topics:
+    logger.info(f'topics: {topics}')
+    listener()
