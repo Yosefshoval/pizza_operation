@@ -9,9 +9,11 @@ r = Redis(host=REDIS_HOST, port=6379, db=0)
 
 
 def cache_order(order: dict, ttl: int = 60):
-    key = f'order:{str(order["_id"])}'
     if "_id" in order: order["_id"] = str(order["_id"])
+
+    key = f'order:{str(order["_id"])}'
     serialized_order = json.dumps(order)
+
     r.set(
         name=key,
         value=serialized_order

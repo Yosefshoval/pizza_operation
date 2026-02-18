@@ -30,12 +30,8 @@ consumer_config = {
     "group.id": KAFKA_GROUP_ID,
     "auto.offset.reset": "earliest"
 }
-try:
-    consumer = Consumer(consumer_config)
-    consumer.subscribe([KAFKA_TOPIC])
-    print(consumer.list_topics(topic=KAFKA_TOPIC, timeout=1.0))
-except Exception as e:
-    print(e)
+consumer = Consumer(consumer_config)
+consumer.subscribe([KAFKA_TOPIC])
 
 client = MongoClient(MONGO_URI)
 print(f'client.is_mongos: {client.is_mongos}')
@@ -77,7 +73,7 @@ def kafka_listener():
             order_value = json.loads(order.value().decode('utf-8'))
             print(f'order received: {order_value}')
 
-            if "_id" not in order:
+            if "_id" not in order_value:
                 continue
 
             time.sleep(15)

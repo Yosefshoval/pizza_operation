@@ -1,3 +1,4 @@
+from bson import json_util
 from pymongo import MongoClient
 from os import getenv
 from bson import ObjectId
@@ -28,5 +29,5 @@ class DBConnection:
 
     def get_order_by_id(self, order_id: str):
         cnx = self.get_collection()
-        result = cnx.find({'_id' : ObjectId(order_id)})
+        result = cnx.find_one({'_id' : ObjectId(order_id)})
         return result

@@ -1,7 +1,7 @@
 from confluent_kafka import Consumer
 from pymongo import MongoClient
 from os import getenv
-import string
+import json
 
 
 KAFKA_TOPIC = getenv('KAFKA_TOPIC')
@@ -17,6 +17,7 @@ consumer_config = {
 }
 print(consumer_config)
 consumer = Consumer(consumer_config)
+consumer.subscribe([KAFKA_TOPIC])
 
 mongodb_client = MongoClient(MONGO_URI)
 

@@ -42,6 +42,7 @@ def post_orders(file: UploadFile):
 
             # 2: publish to kafka
             print('before pushing: ', order)
+            order['_id'] = inserted_id
             publish_message(order)
             print(f'order {order["order_id"]} pushed to kafka')
 
@@ -65,19 +66,23 @@ def post_orders(file: UploadFile):
 @app.get('/order/{order_id}')
 def retrieve_order(order_id: str):
     try:
-        # try to retrieve the order from redis chach
         order = get_order(order_id=order_id)
         if not order:
             print('not order')
             order = mongo_client.get_order_by_id(order_id)
-            order = order.to_list()
-            print(order)
-            cache_order(order[0], ttl)
-            return {'source':'from mongodb', 'order': order[0]}
-        else:
+
+            if not order:
+                raise HTTPException(status_code=404, detail=f'Error: order {order_id} not found')
+
             cache_order(order, ttl)
-        return {'source':'from redis', 'order': json.loads(order)}
+            return {'source':'from mongodb', 'order': order}
+        else:
+            dict_order = json.loads(order)
+            cache_order(dict_order, ttl)
+        return {'source':'from redis', 'order': dict_order}
+
     except Exception as e:
+        print(e)
         raise HTTPException(status_code=500, detail=str(e))
 
 
