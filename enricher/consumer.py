@@ -3,6 +3,7 @@ from os import getenv
 import logging
 import json
 from mongodb import update_order
+from redis_cache import *
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -12,25 +13,23 @@ logger.info('hello from enricher consumer')
 KAFKA_GROUP_ID = getenv('KAFKA_GROUP_ID', 'enricher-team')
 KAFKA_URI = getenv('KAFKA_URI', 'localhost:9092')
 KAFKA_TOPIC = getenv('KAFKA_TOPIC', 'cleaned-instructions')
-
-
+ttl = 5
 
 consumer_config = {
     "bootstrap.servers": KAFKA_URI,
     "group.id": KAFKA_GROUP_ID,
     "auto.offset.reset": "earliest"
 }
+
 consumer = Consumer(consumer_config)
 logger.info('consumer created')
 consumer.subscribe([KAFKA_TOPIC])
-logger.info(f'consumer subscribe to topic {KAFKA_TOPIC}')
+logger.info(f'consumer subscribe to topic {KAFKA_TOPIC}. consumer details: {consumer.list_topics()}')
 
 analysis_path = 'pizza_analysis_lists.json'
 with open(analysis_path, 'r') as file:
     logger.info(f'analysis file is open')
     analysis_list = json.load(file)
-
-
 
 def analysis(order_instructions: str):
     status = {
@@ -63,46 +62,42 @@ def analysis(order_instructions: str):
     return status
 
 
-"""
-is_meat
-is_dairy
-is_kosher
-
-Dairy אין → VEGAN
-Gluten אין → GLUTEN-FREE
-
-status = BURNT
-"""
 
 def listener():
+    logger.info('listener loop starting')
     while True:
         try:
             order_metadata = consumer.poll(1.0)
-            if order is None:
+            if order_metadata is None:
                 continue
-            if order.error():
-                logger.error(f'Error: {order.error()}.')
+            if order_metadata.error():
+                logger.error(f'Error: {order_metadata.error()}.')
                 continue
 
             order_value = json.loads(order_metadata.value().decode('utf-8'))
             logger.info(f'order_value: {order_value}')
 
-            status = analysis(order_value['pizza_prep'])
-            if 'GLUTEN_FREE' in order_value['pizza_prep']:
-                status['gluten'] = False
-            if 'VEGAN' in order_value['pizza_prep']:
-                status['is_dairy'] = False
+            status = search_pizza_type(order_value['pizza_type'])
+            logger.info(f'status received from redis: {status}')
+            if not status:
+                status = analysis(order_value['pizza_prep'])
+                if 'GLUTEN_FREE' in order_value['pizza_prep']:
+                    status['gluten'] = False
+                if 'VEGAN' in order_value['pizza_prep']:
+                    status['is_dairy'] = False
 
-            if status['is_kosher']:
-                status['status'] = 'DELIVERED'
-            else:
-                status['status'] = 'BURNT'
+                if status['is_kosher']:
+                    status['status'] = 'DELIVERED'
+                else:
+                    status['status'] = 'BURNT'
 
-            update_order(status)
-
-                # 2: update mongo if kosher or not
-            # 3: status = BURNT
+            updated = update_order(status)
+            logger.info(f'order updated in mongo: {updated}\n\n')
+            cache_pizza_type(pizza_type=order_value['pizza_type'], status=status, ttl=ttl)
 
         except Exception as e:
-            print(e)
+            logger.error(e)
             continue
+
+
+listener()

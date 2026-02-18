@@ -155,29 +155,31 @@ services:
         condition: service_healthy
 
 
-#  enricher:
-#    build:
-#      context: enricher
-#      dockerfile: Dockerfile
-#
-#    environment:
-#      KAFKA_TOPIC: 'cleaned-instructions'
-#      KAFKA_URI: 'kafka:9092'
-#      KAFKA_GROUP_ID: 'enricher-team'
-#
-#      REDIS_HOST: 'redis'
-#      REDIS_PORT: '6379'
-#
-#      MONGODB_COLLECTION: 'pizza_orders'
-#      MONGODB_DATABASE: 'pizza_orders'
-#      MONGO_URI: 'mongodb://root:password@mongodb:27017/?authSource=admin'
+  enricher:
+    build:
+      context: enricher
+      dockerfile: Dockerfile
+
+    environment:
+      KAFKA_TOPIC: 'cleaned-instructions'
+      KAFKA_URI: 'kafka:9092'
+      KAFKA_GROUP_ID: 'enricher-team'
+
+      REDIS_HOST: 'redis'
+      REDIS_PORT: '6379'
+
+      MONGODB_COLLECTION: 'pizza_orders'
+      MONGODB_DATABASE: 'pizza_orders'
+      MONGO_URI: 'mongodb://root:password@mongodb:27017/?authSource=admin'
 
 
-#    depends_on:
-#      kafka:
-#        condition: service_healthy
-#      redis:
-#        condition: service_healthy
+    depends_on:
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
 
 
 
