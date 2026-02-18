@@ -120,7 +120,7 @@ services:
       KAFKA_URI: 'kafka:9092'
       KAFKA_TOPIC: 'pizza-orders'
       REDIS_HOST: 'redis'
-      REDIS_PORT: '6441'
+      REDIS_PORT: '6379'
       MONGODB_COLLECTION: 'pizza_orders'
       MONGODB_DATABASE: 'pizza_orders'
       MONGO_URI: 'mongodb://root:password@mongodb:27017/?authSource=admin'
@@ -154,31 +154,51 @@ services:
       kafka:
         condition: service_healthy
 
-#
+
 #  enricher:
 #    build:
 #      context: enricher
 #      dockerfile: Dockerfile
+#
+#    environment:
+#      KAFKA_TOPIC: 'cleaned-instructions'
+#      KAFKA_URI: 'kafka:9092'
+#      KAFKA_GROUP_ID: 'enricher-team'
+#
+#      REDIS_HOST: 'redis'
+#      REDIS_PORT: '6379'
+#
+#      MONGODB_COLLECTION: 'pizza_orders'
+#      MONGODB_DATABASE: 'pizza_orders'
+#      MONGO_URI: 'mongodb://root:password@mongodb:27017/?authSource=admin'
 
 
-  worker_text:
-    build:
-      context: text_consumer
-      dockerfile: Dockerfile
+#    depends_on:
+#      kafka:
+#        condition: service_healthy
+#      redis:
+#        condition: service_healthy
 
-    environment:
-      KAFKA_TOPIC: 'pizza-orders'
-      KAFKA_GROUP_ID: 'kitchen-team'
-      KAFKA_URI: "kafka:9092"
-      MONGODB_COLLECTION: 'pizza_orders'
-      MONGODB_DATABASE: 'pizza_orders'
-      MONGO_URI: 'mongodb://root:password@mongodb:27017/?authSource=admin'
 
-    depends_on:
-      kafka:
-        condition: service_healthy
-      mongodb:
-        condition: service_healthy
+
+#  worker_text:
+#    build:
+#      context: text_consumer
+#      dockerfile: Dockerfile
+#
+#    environment:
+#      KAFKA_TOPIC: 'pizza-orders'
+#      KAFKA_GROUP_ID: 'kitchen-team'
+#      KAFKA_URI: "kafka:9092"
+#      MONGODB_COLLECTION: 'pizza_orders'
+#      MONGODB_DATABASE: 'pizza_orders'
+#      MONGO_URI: 'mongodb://root:password@mongodb:27017/?authSource=admin'
+#
+#    depends_on:
+#      kafka:
+#        condition: service_healthy
+#      mongodb:
+#        condition: service_healthy
 
 volumes:
   kafka_kraft:

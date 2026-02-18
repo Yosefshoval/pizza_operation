@@ -3,9 +3,7 @@ from confluent_kafka import Producer, KafkaException
 import json
 
 KAFKA_URI = getenv('KAFKA_URI', 'localhost:9092')
-print(KAFKA_URI)
 KAFKA_TOPIC = getenv('KAFKA_TOPIC', 'pizza-orders')
-print(KAFKA_TOPIC)
 
 producer_config = {'bootstrap.servers' : KAFKA_URI}
 producer = Producer(producer_config)

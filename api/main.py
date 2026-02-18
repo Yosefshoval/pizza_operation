@@ -32,19 +32,15 @@ def post_orders(file: UploadFile):
             order['status'] = 'PREPARING'
             inserted_id = mongo_client.save_order(order)
             if inserted_id is None:
-                print('order already exist or something else was wrong')
                 exist_orders += 1
                 continue
                 # return {'message': 'order already exist or something else was wrong'}
 
             ids.append(str(inserted_id))
-            print(f'order {inserted_id} inserted to mongodb')
 
             # 2: publish to kafka
-            print('before pushing: ', order)
             order['_id'] = inserted_id
             publish_message(order)
-            print(f'order {order["order_id"]} pushed to kafka')
 
             # 3 cache in redis for 60 sec
             cache_order(order, ttl)
@@ -68,7 +64,6 @@ def retrieve_order(order_id: str):
     try:
         order = get_order(order_id=order_id)
         if not order:
-            print('not order')
             order = mongo_client.get_order_by_id(order_id)
 
             if not order:
@@ -82,7 +77,6 @@ def retrieve_order(order_id: str):
         return {'source':'from redis', 'order': dict_order}
 
     except Exception as e:
-        print(e)
         raise HTTPException(status_code=500, detail=str(e))
 
 

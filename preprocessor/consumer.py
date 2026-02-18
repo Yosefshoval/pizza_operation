@@ -1,6 +1,7 @@
 from confluent_kafka import Consumer
 import json
 from producer import flush_message
+from os import getenv
 
 
 KAFKA_TOPIC = getenv('KAFKA_TOPIC', 'pizza-orders')
@@ -12,10 +13,11 @@ consumer_config = {
     "group.id": KAFKA_GROUP_ID,
     "auto.offset.reset": "earliest"
 }
+
 consumer = Consumer(consumer_config)
 consumer.subscribe([KAFKA_TOPIC])
 
-prep_path = ''
+prep_path = './pizza_prep.json'
 
 with open(prep_path, 'r') as file:
     PIZZA_PREP_DATA = json.load(file)
@@ -53,10 +55,9 @@ def listener():
             if order is None:
                 continue
 
-            print(f'consumer.poll(1.0): {order}')
 
             if order.error():
-                print(f'Error: {order.error()}')
+                continue
 
             order_value = json.loads(order.value().decode('utf-8'))
 
@@ -68,7 +69,6 @@ def listener():
 
             pizza_prep = search_prep(order_value['pizza_type'])
             if not pizza_prep:
-                print('pizza type not found')
                 continue
             cleaned_prep = remove_punctuation_translate(pizza_prep)
 
@@ -78,3 +78,6 @@ def listener():
         except Exception as e:
             print(f'Error: {e}')
             continue
+
+
+listener()
