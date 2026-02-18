@@ -1,6 +1,30 @@
 version: '3.8'
 
 services:
+  worker_kitchen:
+    build:
+      context: /kitchen_consumer
+      dockerfile: Dockerfile
+
+#    restart: always
+    environment:
+      KAFKA_TOPIC: 'pizza-orders'
+      KAFKA_GROUP_ID: 'text-team'
+      KAFKA_URI: "kafka:9092"
+      REDIS_HOST: 'redis'
+      REDIS_PORT: '6379'
+      MONGODB_COLLECTION: 'pizza_orders'
+      MONGODB_DATABASE: 'pizza_orders'
+      MONGO_URI: 'mongodb://root:password@mongodb:27017/?authSource=admin'
+
+    depends_on:
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+
   mongodb:
     image: docker.io/library/mongo:7.0
     container_name: pizza_orders_mongo
@@ -113,29 +137,6 @@ services:
         condition: service_healthy
 
 
-  worker_kitchen:
-    build:
-      context: /kitchen_consumer
-      dockerfile: Dockerfile
-
-#    restart: always
-    environment:
-      KAFKA_TOPIC: 'pizza-orders'
-      KAFKA_GROUP_ID: 'text-team'
-      KAFKA_URI: "kafka:9092"
-      REDIS_HOST: 'redis'
-      REDIS_PORT: '6441'
-      MONGODB_COLLECTION: 'pizza_orders'
-      MONGODB_DATABASE: 'pizza_orders'
-      MONGO_URI: 'mongodb://root:password@mongodb:27017/?authSource=admin'
-
-    depends_on:
-      kafka:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      mongodb:
-        condition: service_healthy
 
 
 #  preprocessor:

@@ -46,13 +46,16 @@ def text_analysis(order_instructions: str):
 def update_order_mongo(order: dict):
     cnx = get_collection()
     set_statement = {'allergies_flaged' : order['allergies_flaged']}
+    print(f'set_statement: {set_statement}')
     if order.get('protocol_cleaned'):
+        print(f'order["protocol_cleaned"]: {order["protocol_cleaned"]}')
         set_statement['protocol_cleaned'] = order['protocol_cleaned']
 
     result = cnx.update_one(
         {'order_id' : order['order_id']},
-        {'$set' : {set_statement}}
+        {'$set' : set_statement}
             )
+    print(result)
     effect = f'matched: {result.matched_count}. modified: {result.modified_count}'
     print(effect)
     return effect
@@ -72,9 +75,9 @@ def worker_listener():
             order_value = json.loads(order.value().decode('utf-8'))
             print(f'order received: {order_value}')
 
-            if "_id" not in order:
+            if "_id" not in order_value:
                 continue
-
+            print(type(order_value))
             analysis = text_analysis(order_value['special_instructions'])
             print('analysis: ', analysis)
             if analysis:
@@ -85,7 +88,7 @@ def worker_listener():
             update_order_mongo(order_value)
 
         except Exception as e:
-            print(e)
+            print(f'Error: {e}')
             continue
 
 worker_listener()
